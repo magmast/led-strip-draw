@@ -60,18 +60,25 @@ export function CanvasArea({
           }}
         >
           {Array.from({ length: matrixSize * matrixSize }, (_, index) => {
-            const { r, g, b } = cells[index];
+            const row = Math.floor(index / matrixSize);
+            const col =
+              row % 2 === 0
+                ? matrixSize - (index % matrixSize) - 1
+                : index % matrixSize;
+            const idx = row * matrixSize + col;
+            console.log({ row, col, idx, index });
+            const { r, g, b } = cells[idx];
 
             return (
               <button
-                key={index}
+                key={idx}
                 style={{
                   width: cellSize,
                   height: cellSize,
                   background: `rgb(${r}, ${g}, ${b})`,
                 }}
                 className="-ml-[1px] -mt-[1px] border border-slate-300"
-                onClick={onCellPressed ? () => onCellPressed(index) : undefined}
+                onClick={onCellPressed ? () => onCellPressed(idx) : undefined}
               />
             );
           })}

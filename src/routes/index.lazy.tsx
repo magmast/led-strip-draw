@@ -28,7 +28,9 @@ function Index() {
 
   const { pixels, setPixel, setAllPixels } = usePixels();
 
-  function handleError(): void {
+  function handleError(error: unknown): void {
+    console.error(error);
+
     toast("Something went wrong. Try reconnecting the device.", {
       dismissible: true,
       closeButton: true,
@@ -41,9 +43,9 @@ function Index() {
     try {
       const newColor = pixels[index] === color ? { r: 0, g: 0, b: 0 } : color;
       setPixel(index, newColor);
-      await matrix?.setColorAtIndex(index, newColor);
+      await matrix?.setColor(index, newColor);
     } catch (error) {
-      handleError();
+      handleError(error);
     }
   }
 
@@ -52,9 +54,10 @@ function Index() {
 
     try {
       setAllPixels(color);
-      await matrix?.fill(color);
+      const tmpPixels = Array.from({ length: 256 }, () => color);
+      await matrix?.setColor(tmpPixels);
     } catch (error) {
-      handleError();
+      handleError(error);
     } finally {
       setBlockDrawing(false);
     }
@@ -64,11 +67,9 @@ function Index() {
     setBlockDrawing(true);
 
     try {
-      for (let i = 0; i < 256; i++) {
-        await matrix?.setColorAtIndex(i, pixels[i]);
-      }
+      await matrix?.setColor(pixels);
     } catch (error) {
-      handleError();
+      handleError(error);
     } finally {
       setBlockDrawing(false);
     }
@@ -88,7 +89,7 @@ function Index() {
         <CanvasToolbar placement="bottom">
           <ToolbarContainer className="space-x-2">
             <Popover>
-              <PopoverTrigger>
+              <PopoverTrigger asChild>
                 <button
                   disabled={blockDrawing}
                   className="h-8 w-8 rounded-full border border-slate-300"
