@@ -59,7 +59,9 @@ export class LEDMatrix {
   }
 
   async #setColorAtIndex(index: number, color: Color): Promise<void> {
-    await this.#setIndex(index);
+    const rowLength = Math.sqrt(await this.getLength());
+    const mappedIndex = this.#mapIndex(rowLength, index);
+    await this.#setIndex(mappedIndex);
 
     const buffer = new ArrayBuffer(3);
     const view = new DataView(buffer);
@@ -70,13 +72,19 @@ export class LEDMatrix {
   }
 
   async #setColors(colors: Color[]) {
-    for (let i = 0; i < colors.length; i += MAX_COLOR_DATA_SIZE / 3) {
+    const mappedColors = Array.from({ length: colors.length }).map((_, i) => {
+      const rowLength = Math.sqrt(colors.length);
+      const mappedIndex = this.#mapIndex(rowLength, i);
+      return colors[mappedIndex];
+    });
+
+    for (let i = 0; i < mappedColors.length; i += MAX_COLOR_DATA_SIZE / 3) {
       await this.#setIndex(i);
 
-      const size = Math.min(colors.length - i, MAX_COLOR_DATA_SIZE / 3);
+      const size = Math.min(mappedColors.length - i, MAX_COLOR_DATA_SIZE / 3);
       const buffer = new ArrayBuffer(size * 3);
       const view = new DataView(buffer);
-      const chunk = colors.slice(i, i + size);
+      const chunk = mappedColors.slice(i, i + size);
       chunk.forEach((color, j) => {
         const offset = j * 3;
         view.setUint8(offset, color.r);
@@ -93,6 +101,13 @@ export class LEDMatrix {
     const view = new DataView(buffer);
     view.setUint16(0, index, true);
     await this.#indexChrc.writeValue(buffer);
+  }
+
+  #mapIndex(rowLength: number, index: number) {
+    const row = Math.floor(index / rowLength);
+    const col =
+      row % 2 === 0 ? rowLength - (index % rowLength) - 1 : index % rowLength;
+    return row * rowLength + col;
   }
 
   async disconnect(): Promise<void> {

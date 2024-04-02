@@ -1,5 +1,10 @@
 import { AsyncButton } from "@/components/async-button";
-import { Canvas, CanvasArea, CanvasToolbar } from "@/components/canvas";
+import {
+  Canvas,
+  CanvasArea,
+  CanvasCell,
+  CanvasToolbar,
+} from "@/components/canvas";
 import { ToolbarContainer } from "@/components/toolbar";
 import {
   Popover,
@@ -14,6 +19,8 @@ import { createLazyFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { SketchPicker } from "react-color";
 import { toast } from "sonner";
+
+const CELLS_COUNT = 256;
 
 export const Route = createLazyFileRoute("/")({
   component: Index,
@@ -54,7 +61,7 @@ function Index() {
 
     try {
       setAllPixels(color);
-      const tmpPixels = Array.from({ length: 256 }, () => color);
+      const tmpPixels = Array.from({ length: CELLS_COUNT }, () => color);
       await matrix?.setColor(tmpPixels);
     } catch (error) {
       handleError(error);
@@ -80,11 +87,17 @@ function Index() {
       <Toaster />
 
       <Canvas>
-        <CanvasArea
-          matrixSize={16}
-          cells={pixels}
-          onCellPressed={handleCellPressed}
-        />
+        <CanvasArea>
+          {Array.from({ length: CELLS_COUNT }, (_, index) => {
+            return (
+              <CanvasCell
+                key={index}
+                color={pixels[index]}
+                onClick={() => handleCellPressed(index)}
+              />
+            );
+          })}
+        </CanvasArea>
 
         <CanvasToolbar placement="bottom">
           <ToolbarContainer className="space-x-2">
@@ -92,15 +105,17 @@ function Index() {
               <PopoverTrigger asChild>
                 <button
                   disabled={blockDrawing}
-                  className="h-8 w-8 rounded-full border border-slate-300"
+                  className="h-8 w-8 rounded-full border border-slate-500"
                   style={{
                     background: `rgb(${color.r}, ${color.g}, ${color.b})`,
                   }}
                 />
               </PopoverTrigger>
 
-              <PopoverContent>
+              <PopoverContent className="w-auto border-0 bg-transparent shadow-none">
                 <SketchPicker
+                  className="w-full"
+                  disableAlpha
                   color={color}
                   onChange={(color) => setColor(color.rgb)}
                 />
