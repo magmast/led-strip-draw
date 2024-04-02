@@ -1,6 +1,7 @@
 import { Color } from "@/types/color";
 
 const LENGTH_CHRC_UUID = "410f7f12-e051-4b5d-a8ed-7d5619727b34";
+const BRIGHTNESS_CHRC_UUID = "a1e0f55c-2d1b-4fca-ae9d-efb3248c202a";
 const INDEX_CHRC_UUID = "85289f22-baa7-447b-acb2-d961c06ecabf";
 const COLOR_CHRC_UUID = "0c903aa6-de65-44c4-9cde-8873267e16c0";
 
@@ -13,14 +14,24 @@ export class LEDMatrix {
     const server = await device.gatt!.connect();
     const service = await server.getPrimaryService(LEDMatrix.SERVICE_UUID);
     const lengthChrc = await service.getCharacteristic(LENGTH_CHRC_UUID);
+    const brightnessChrc =
+      await service.getCharacteristic(BRIGHTNESS_CHRC_UUID);
     const indexChrc = await service.getCharacteristic(INDEX_CHRC_UUID);
     const colorChrc = await service.getCharacteristic(COLOR_CHRC_UUID);
-    return new LEDMatrix(device, lengthChrc, indexChrc, colorChrc);
+    return new LEDMatrix(
+      device,
+      lengthChrc,
+      brightnessChrc,
+      indexChrc,
+      colorChrc,
+    );
   }
 
   #device: BluetoothDevice;
 
   #lengthChrc: BluetoothRemoteGATTCharacteristic;
+
+  #brightnessChrc: BluetoothRemoteGATTCharacteristic;
 
   #indexChrc: BluetoothRemoteGATTCharacteristic;
 
@@ -29,11 +40,13 @@ export class LEDMatrix {
   private constructor(
     device: BluetoothDevice,
     lengthChrc: BluetoothRemoteGATTCharacteristic,
+    brightnessChrc: BluetoothRemoteGATTCharacteristic,
     indexChrc: BluetoothRemoteGATTCharacteristic,
     colorChrc: BluetoothRemoteGATTCharacteristic,
   ) {
     this.#device = device;
     this.#lengthChrc = lengthChrc;
+    this.#brightnessChrc = brightnessChrc;
     this.#indexChrc = indexChrc;
     this.#colorChrc = colorChrc;
   }
@@ -41,6 +54,13 @@ export class LEDMatrix {
   async getLength(): Promise<number> {
     const value = await this.#lengthChrc.readValue();
     return value.getUint16(0, true);
+  }
+
+  async setBrightness(brightness: number): Promise<void> {
+    const buffer = new ArrayBuffer(1);
+    const view = new DataView(buffer);
+    view.setUint8(0, brightness);
+    await this.#brightnessChrc.writeValue(buffer);
   }
 
   async setColor(index: number, color: Color): Promise<void>;

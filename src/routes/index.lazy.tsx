@@ -6,11 +6,13 @@ import {
   CanvasToolbar,
 } from "@/components/canvas";
 import { ToolbarContainer } from "@/components/toolbar";
+import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Slider } from "@/components/ui/slider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { LEDMatrix } from "@/services/led-matrix";
@@ -33,6 +35,8 @@ function Index() {
 
   const [color, setColor] = useState({ r: 255, g: 255, b: 255 });
 
+  const [brightness, setBrightness] = useState(255);
+
   const { pixels, setPixel, setAllPixels } = usePixels();
 
   function handleError(error: unknown): void {
@@ -42,6 +46,11 @@ function Index() {
       dismissible: true,
       closeButton: true,
     });
+  }
+
+  function handleBrightnessChange(value: number) {
+    setBrightness(value);
+    matrix?.setBrightness(brightness);
   }
 
   async function handleCellPressed(index: number) {
@@ -121,6 +130,25 @@ function Index() {
                 />
               </PopoverContent>
             </Popover>
+
+            {matrix && (
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline">
+                    {((brightness / 255) * 100).toFixed(0)}%
+                  </Button>
+                </PopoverTrigger>
+
+                <PopoverContent>
+                  <Slider
+                    value={[brightness]}
+                    min={0}
+                    max={255}
+                    onValueChange={([value]) => handleBrightnessChange(value)}
+                  />
+                </PopoverContent>
+              </Popover>
+            )}
 
             <div className="flex-grow" />
 
